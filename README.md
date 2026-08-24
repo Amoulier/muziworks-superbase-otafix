@@ -5,6 +5,11 @@
 
 Adafruit nRF52 bootloader with enhanced OTA DFU, forked for [Meshtastic](https://meshtastic.org) from [oltaco's OTAFIX bootloader](https://github.com/oltaco/Adafruit_nRF52_Bootloader_OTAFIX). This is the bootloader several nRF52-based Meshtastic devices ship with, and the one the [Meshtastic Android app](https://github.com/meshtastic/Meshtastic-Android) can upgrade in-app.
 
+> **Fork scope:** releases from `Amoulier/muziworks-superbase-otafix` contain
+> bootloader artifacts exclusively for Muzi Works Base Uno, Base Duo, and
+> Superbase hardware. Other inherited board definitions remain only so pull
+> requests can detect regressions against upstream OTAFIX.
+
 Current release: **OTAFIX 2.3** — see [changelog.md](changelog.md) for version history.
 
 ## Contents
@@ -75,6 +80,7 @@ bootloader and SoftDevice zip package").
 - Heltec T114 / HT-nRF5262
 - LilyGO T-Echo
 - Minewsemi MX25LE01
+- Muzi Works Base Uno / Base Duo / Superbase
 - Nologo ProMicro NRF52840 (aka SuperMini NRF52840)
 - RAK 3401
 - RAK 4631 ([See note](#notes-on-rak4631-bootloader))
@@ -101,6 +107,7 @@ When in OTA DFU mode, devices advertise using a board-specific name rather than 
 | Heltec T114                  | `T114_DFU`               |
 | LILYGO T-Echo                | `LGTE_DFU`               |
 | Minewsemi MX25LE01           | `MX25_DFU`               |
+| Muzi Works Base / Superbase  | `MUZI_DFU`               |
 | ProMicro NRF52840            | `PROM_DFU`               |
 | RAK 4631                     | `4631_DFU`               |
 | RAK 3401                     | `3401_DFU`               |
