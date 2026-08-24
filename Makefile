@@ -43,6 +43,12 @@ endif
 GIT_VERSION := $(shell git describe --dirty --always --tags)
 GIT_SUBMODULE_VERSIONS := $(shell git submodule status | cut -d" " -f3,4 | paste -s -d" " -)
 
+# Numeric version exposed to the application through TIMER2.  Do not derive
+# this from GIT_VERSION: a fresh fork may not contain upstream tags, in which
+# case `git describe` returns a hexadecimal commit ID that is not a valid
+# decimal C integer literal (for example, 7b70a93).
+BOOTLOADER_VERSION ?= 0.9.2
+
 # compiled file name
 OUT_NAME = $(BOARD)_bootloader-$(GIT_VERSION)
 
@@ -313,7 +319,7 @@ CFLAGS += -DUF2_VERSION_BASE='"$(GIT_VERSION)"'
 CFLAGS += -DUF2_VERSION='"$(GIT_VERSION) $(GIT_SUBMODULE_VERSIONS)"'
 CFLAGS += -DBLEDIS_FW_VERSION='"$(GIT_VERSION) $(SD_NAME) $(SD_VERSION)"'
 
-_VER = $(subst ., ,$(word 1, $(subst -, ,$(GIT_VERSION))))
+_VER = $(subst ., ,$(BOOTLOADER_VERSION))
 CFLAGS += -DMK_BOOTLOADER_VERSION='($(word 1,$(_VER)) << 16) + ($(word 2,$(_VER)) << 8) + $(word 3,$(_VER))'
 
 # Debug option use RTT for printf
