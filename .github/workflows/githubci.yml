@@ -76,6 +76,10 @@ jobs:
         make BOARD=${{ matrix.board }} all
         make BOARD=${{ matrix.board }} copy-artifact
 
+    - name: Audit Muzi Base release artifacts
+      if: ${{ matrix.board == 'muzi_base' }}
+      run: python3 tools/audit_muzi_base.py --artifact-dir _bin/muzi_base
+
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ${{ matrix.board }}
