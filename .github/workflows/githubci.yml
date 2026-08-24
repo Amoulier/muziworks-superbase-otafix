@@ -34,7 +34,13 @@ jobs:
         id: set-matrix
         working-directory: src/boards
         run: |
-          MATRIX_JSON=$(ls -d */ | sed 's/\/$//' | jq -R -s -c 'split("\n")[:-1]')
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            # This fork publishes bootloader artifacts only for MuziWorks Base
+            # hardware. Pull requests still compile every inherited board.
+            MATRIX_JSON='["muzi_base"]'
+          else
+            MATRIX_JSON=$(ls -d */ | sed 's/\/$//' | jq -R -s -c 'split("\n")[:-1]')
+          fi
           echo "matrix=$MATRIX_JSON"
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
