@@ -131,10 +131,13 @@ submodule) — `SD_NAME`/`SD_VERSION` in `Makefile` select which one.
 ### CI (`.github/workflows/githubci.yml`)
 
 A `set-matrix` job lists `src/boards/*/` and fans out a `build` job per
-board (currently 17), on every PR and on `release: created`. Release events
-additionally upload `.zip`/`.hex`/`update-*.uf2` per board as release
-assets; PR runs just validate the compile and get 1-day artifact retention
-(release runs keep 90).
+board (currently 17), on every PR and on `release: created`. On release
+events a single `release` job downloads every board's artifacts and uploads
+`.zip`/`.hex`/`update-*.uf2` per board plus `tools/meshtastic_factory_erase.uf2`
+as release assets; PR runs just validate the compile and get 1-day artifact
+retention (release runs keep 90). Only `release` holds `contents: write` —
+every job that runs repo code (`make`, `tools/`) is read-only with
+`persist-credentials: false`, so a PR cannot borrow a write token.
 
 Branch protection on `master` requires all 18 checks (`set-matrix` + 17
 `build (<board>)` contexts) by literal name. **Adding, removing, or renaming
