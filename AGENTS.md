@@ -81,11 +81,23 @@ keep in sync in either build system (unlike the CI matrix, see below).
 ### Core bootloader (`src/`)
 
 `main.c` is the entry point (MBR/SoftDevice handoff, DFU state machine
-dispatch). `screen.c`/`images.c` render the OLED UF2/BLE-OTA screens, active
+dispatch). `dfu_magic.h` holds the `NRF_POWER->GPREGRET` magics an
+application (or the bootloader itself) writes to pick the next boot mode. `screen.c`/`images.c` render the OLED UF2/BLE-OTA screens, active
 only when the board defines `DISPLAY_PIN_SCK` — today that's `heltec_t096`,
 `heltec_t1`, and `heltec_t114`. `dfu_ble_svc.c`/`dfu_init.c` are the BLE DFU
 service; `flash_nrf5x.c` wraps flash writes. `usb/` is the USB MSC (UF2
-drive) + CDC stack on top of the vendored `lib/tinyusb`. `cmsis/` is ARM
+drive) + CDC stack on top of the vendored `lib/tinyusb`. A UF2 block with
+family `CFG_UF2_MESHTASTIC_ERASE_ID` (`usb/uf2/uf2cfg.h`) is a factory-erase
+request: `ghostfat.c` flags it, `msc_uf2.c` erases the whole App Data reservation
+(`USER_FLASH_END`..`BOOTLOADER_REGION_START`) once the host has acked the
+write, then arms a 500 ms `app_timer` (or an eject from the host) to leave
+the DFU loop so `check_dfu_mode()` can tear USB down before it resets into
+UF2 mode — resetting inside the MSC callback would drop the host's trailing
+FAT writes. The reservation holds two things on
+nRF52840 — LittleFS in the top 7 pages and firmware's `WarmNodeStore`
+node-DB ring in the 3 below it at `0xEA000` — so the loop must cover the
+bootloader's bound, never just the filesystem. `tools/make_factory_erase_uf2.py` emits the
+board-agnostic file, checked in as `tools/meshtastic_factory_erase.uf2`. `cmsis/` is ARM
 CMSIS headers.
 
 ### Vendored submodules (`lib/`)
@@ -119,10 +131,13 @@ submodule) — `SD_NAME`/`SD_VERSION` in `Makefile` select which one.
 ### CI (`.github/workflows/githubci.yml`)
 
 A `set-matrix` job lists `src/boards/*/` and fans out a `build` job per
-board (currently 18), on every PR and on `release: created`. Release events
-additionally upload `.zip`/`.hex`/`update-*.uf2` per board as release
-assets; PR runs just validate the compile and get 1-day artifact retention
-(release runs keep 90).
+board (currently 18), on every PR and on `release: created`. On release
+events a single `release` job downloads every board's artifacts and uploads
+`.zip`/`.hex`/`update-*.uf2` per board plus `tools/meshtastic_factory_erase.uf2`
+as release assets; PR runs just validate the compile and get 1-day artifact
+retention (release runs keep 90). Only `release` holds `contents: write` —
+every job that runs repo code (`make`, `tools/`) is read-only with
+`persist-credentials: false`, so a PR cannot borrow a write token.
 
 Branch protection on `master` requires all 19 checks (`set-matrix` + 18
 `build (<board>)` contexts) by literal name. **Adding, removing, or renaming

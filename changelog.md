@@ -1,12 +1,16 @@
 # Adafruit nRF52 Bootloader Changelog
 
-OTAFIX 2.1–2.3 are Meshtastic's fork; everything from 0.6.2 down predates
+OTAFIX 2.1–2.4 are Meshtastic's fork; everything from 0.6.2 down predates
 it and is upstream Adafruit history, kept for provenance.
 
 ## Unreleased
 
 - Add MuziWorks Base Uno, Base Duo, and Superbase support with the original
   MuziWorks USB/UF2 identity and the `MUZI_DFU` BLE advertising name.
+
+## OTAFIX 2.4
+
+- Factory erase from the bootloader, no application and no serial terminal needed. Dropping `meshtastic_factory_erase.uf2` (a single UF2 block with family ID `0x4D455348`, board-agnostic, checked in under `tools/` and attached to every release) onto the UF2 drive erases the whole App Data reservation — the application's LittleFS (config, keys, bonds) and, below it, firmware's `WarmNodeStore` node-DB ring at `0xEA000` — and reboots straight back into UF2 mode for the firmware install. The application and bootloader settings are left intact, so a device unplugged at that point boots its app factory-fresh. Replaces the `nrf52_factory_erase` sketch flow, which had to be flashed as the application, waited for a serial terminal to open before erasing, and shipped in two SoftDevice-specific variants. After the erase the bootloader keeps servicing USB for 500 ms so the host's trailing FAT writes are acknowledged and the copy completes cleanly (the RP2040 bootrom does the same), then detaches and resets; ejecting the drive resets it immediately. `INFO_UF2.TXT` gains a `Factory-Erase:` line so flashers can tell whether a bootloader supports it; older bootloaders ignore the file without error. `DFU_MAGIC_*` moved from `main.c` to `src/dfu_magic.h`. Verified on RAK4631 (stock 0.4.3 → this build over UF2): the drive drops 1.3 s after the copy and is back in UF2 mode at 2.9 s; a firmware UF2 copied to it boots with region UNSET, default owner, and an empty node DB.
 
 ## OTAFIX 2.3-BP1.6
 
